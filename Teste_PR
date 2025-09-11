@@ -1,0 +1,141 @@
+import {input, number, select} from '@inquirer/prompts'
+import api from './CrudAPI.js'
+
+async function menu() {
+    const answer = await select({
+        message: 'Opção:',
+        choices: [
+        {
+            name: 'Criar novo pedido',
+            value: 'novoPedido'
+        },
+
+        {
+            name: 'Adicionar produtos ao pedido',
+            value: 'adicionarPedido'
+        },
+        {
+            name: 'Listar todos os pedidos',
+            value: 'listarPedidos'
+        },
+        {
+            name: 'Listar todos os produtos',
+            value: 'listarProdutos'
+        },
+        {
+            name: 'Buscar produtos de um determinado pedido',
+            value: 'buscarProdutoPorPedido'
+        },
+        {
+            name: 'Listar todos os pedidos com valor total',
+            value: 'listarPedidosTotal'
+        },
+        {
+            name: 'Sair',
+            value: 'sair'
+        }
+
+        ]
+    })
+
+    switch(answer) {
+        case 'novoPedido':
+            await novoPedido()
+            break;
+        case 'adicionarPedido': 
+            await adicionar_pedido()
+            break;
+        case 'listarPedidos':
+            await listarPedidos()
+            break;
+        case 'listarProdutos':
+            await listarProdutos()
+            break;
+        case 'buscarProdutoPorPedido': 
+            await buscarProdutoPorPedido()
+            break;
+        case 'listarPedidosTotal':
+            await listarPedidosTotal()
+            break;
+        case 'sair': 
+            return;
+    }
+    menu()
+}
+
+async function novoPedido(){
+    let cliente = await input({message: "Digite o nome do novo cliente:"})
+    let novo_registro = await api.cadastrarPedido(cliente)
+    console.log(`Seja bem vindo! Suas informações: ID - ${novo_registro.id}, NOME - ${novo_registro.cliente}!`)
+}
+
+async function adicionar_pedido(){
+    let id_pedido = await number({message: "Digite o ID do pedido:"})
+    let confere = await api.listarPedidos(id_pedido)
+    if(!confere){
+        console.error("Registro inexistente/não encontrado!")
+    } else {
+        let produto = await input({message: "Informe o produto:"})
+        let valor = parseFloat(await input({message: "Informe o valor em R$:"}))
+        if(produto =="" || valor == ""){
+            console.error("Você deixou espaços em branco! Encerrando...")
+        } else {
+            let novo = {id_pedido, produto, valor}
+            let criar = await api.cadastrarPedidoProduto(novo)
+            console.log(`Cadastro realizado com sucesso! Nova ID: ${criar.id}`)
+        }
+    }
+}
+
+async function listarPedidos(){
+    let listar = await api.listarPedidos()
+    listar.forEach((elemento)=>{
+        console.log(`${elemento.id} - ${elemento.cliente}`)
+    })
+}
+
+async function listarProdutos(){
+    let listar = await api.listarPedidoProdutos()
+    listar.filter((elemento)=>{
+        console.log(`${elemento.pedido_id} - ${elemento.id} - ${elemento.produto} - R$${elemento.valor}`)
+        })     
+}
+
+async function buscarProdutoPorPedido(){
+    let valor = await number({message: "Informe o ID do pedido que deseja listar:"})
+    let filtrar = await api.lerPedidoPorId(valor)
+    if(!filtrar){
+        console.error("ID inexistente/não encontrado")
+    } else {
+        let listar = await api.listarPedidoProdutos()
+        let cliente = await api.listarPedidos()
+        cliente.find((item)=>{
+            if(item.id === valor){
+                console.log(`Cliente: ${item.cliente}`)
+                listar.find((elemento)=>{
+                    if(elemento.pedido_id === valor){
+                        console.log(`${elemento.id} - ${elemento.produto} - R$${elemento.valor}`)
+                    }
+            })}
+        })
+    }
+    
+}
+
+async function listarPedidosTotal(){
+    let pedido = await api.listarPedidos()
+    // let produto_id = await api.lerPedidoProdutoPorId()
+    let listar = await api.listarPedidoProdutos()
+    pedido.forEach((item)=>{
+        let filtro = listar.filter((elemento)=>{
+            return elemento.pedido_id === item.id
+        })
+        let soma = filtro.reduce((item1, item2)=>{
+            item1 += item2.valor
+            return item1
+        }, 0)
+        console.log(`${item.id} - ${item.cliente} - R$${soma}`)
+    })
+}    
+
+await menu()
