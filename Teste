@@ -5,9 +5,13 @@ import api from './CrudAPI.js'
 async function criar(){
     let nome = await input({message: "Diga seu nome: "})
     let email = await input({message: "Diga seu email: "})
-    let pessoa = {nome:nome, email:email};
-    let cadastro = await api.criar(pessoa);
-    console.log(`Cadastro da pessoa ${cadastro.id} feito com sucesso!`)
+    if(nome==""||email==""){
+        console.log("ERRO! ENCERRANDO SESSÃO...")
+    } else {
+        let pessoa = {nome:nome, email:email};
+        let cadastro = await api.criar(pessoa);
+        console.log(`Cadastro da pessoa ${cadastro.id} feito com sucesso!`)
+    }
 }
 
 async function ler(){
@@ -34,8 +38,12 @@ async function atualizaRegistro(){
     let email = await input({message: "Diga o novo email para o ID " + id + ":"})
     let novo = {}
 
-    if(nome){novo.nome = nome}
-    if(email){novo.email = email}
+    if(nome==""){
+        console.log("O nome segue o mesmo.")
+    } else {novo.nome = nome}
+    if(email==""){
+        console.log("O email segue o mesmo")
+    } else {novo.email = email}
     let novosDados = await api.atualizar(id, novo)
     console.log(`O ID ${id} foi alterado! Segue seus novos dados: ${novosDados.nome} - ${novosDados.email}`)
 }
@@ -57,18 +65,26 @@ async function sobrenome(){
     let todos = await api.lerTodos()
     todos.forEach((valor)=>{
         let separado = valor.nome.split(" ")
-        let sobrenome = `${separado[separado.length-1]}, ${separado[0]}`
-        console.log(`${valor.id} - ${sobrenome} - ${valor.email}`)
+        if(separado.length > 1){
+            let sobrenome = `${separado[separado.length-1]}, ${separado[0]}`
+            console.log(`${valor.id} - ${sobrenome} - ${valor.email}`)
+        } else {
+            console.log(`${valor.id} - ${separado[0]} não tem sobrenome.`)
+        }
     })
 }
 
 async function pesquisaNome(){
     let nomezinho = await input({message: "Informe quem você quer achar: "})
     let registros = await api.lerTodos()
-    let procura = registros.filter((valor)=>valor.nome.toLowerCase().startsWith(nomezinho.toLowerCase()))
-    procura.forEach((valor)=>{
+    let procura = registros.filter((valor)=>valor.nome.toLowerCase().includes(nomezinho.toLowerCase()))
+    if(procura.length === 0){
+        console.log("Nome não existente no banco de dados")
+    } else {
+        procura.forEach((valor)=>{
         console.log(`${valor.id} - ${valor.nome} - ${valor.email}`)
     })
+    }
 }
 
 let opcao;
