@@ -1,0 +1,145 @@
+import {input, number, select} from '@inquirer/prompts';
+
+import api from './CrudAPI.js'
+
+async function criar(){
+    let nome = await input({message: "Diga seu nome: "})
+    let email = await input({message: "Diga seu email: "})
+    let pessoa = {nome:nome, email:email};
+    let cadastro = await api.criar(pessoa);
+    console.log(`Cadastro da pessoa ${cadastro.id} feito com sucesso!`)
+}
+
+async function ler(){
+    let todos = await api.lerTodos();
+    todos.forEach((item) => console.log(`${item.id} - ${item.nome} - ${item.email}`));
+}
+
+async function buscaPorID(){
+    let id = await number({message: "Digite o ID para busca: "})
+    let buscar = await api.lerPorId(id);
+    if(buscar){
+        console.log("Aqui o resultado da sua busca...")
+        console.log("ID: " + buscar.id)
+        console.log("NOME: " + buscar.nome)
+        console.log("E-MAIL: " + buscar.email)
+    } else {
+        console.log("Nenhuma correspondência")
+    }
+}
+
+async function atualizaRegistro(){
+    let id = await number({message: "ID para mudança: "})
+    let nome = await input({message: "Diga o novo nome para o ID " + id + ":"})
+    let email = await input({message: "Diga o novo email para o ID " + id + ":"})
+    let novo = {}
+
+    if(nome){novo.nome = nome}
+    if(email){novo.email = email}
+    let novosDados = await api.atualizar(id, novo)
+    console.log(`O ID ${id} foi alterado! Segue seus novos dados: ${novosDados.nome} - ${novosDados.email}`)
+}
+
+async function excluirRegistro(){
+    let id = await number({message: "Informe o ID para exclusão: "})
+    let excluir = await api.excluir(id);
+    if(excluir){
+        console.log("Registro excluído")
+    }
+}
+
+async function maiuscula(){
+    let todos = await api.lerTodos()
+    todos.map((valor)=>console.log(`${valor.id} - ${valor.nome.toUpperCase()} - ${valor.email.toUpperCase()}`))
+}
+
+async function sobrenome(){
+    let todos = await api.lerTodos()
+    todos.forEach((valor)=>{
+        let separado = valor.nome.split(" ")
+        let sobrenome = `${separado[separado.length-1]}, ${separado[0]}`
+        console.log(`${valor.id} - ${sobrenome} - ${valor.email}`)
+    })
+}
+
+async function pesquisaNome(){
+    let nomezinho = await input({message: "Informe quem você quer achar: "})
+    let registros = await api.lerTodos()
+    let procura = registros.filter((valor)=>valor.nome.toLowerCase().startsWith(nomezinho.toLowerCase()))
+    procura.forEach((valor)=>{
+        console.log(`${valor.id} - ${valor.nome} - ${valor.email}`)
+    })
+}
+
+let opcao;
+while(opcao!="sair"){
+        opcao = await select({
+        message: 'Opção',
+        choices: [
+            {
+                name: 'Cadastrar Registro',
+                value: 'cadastrar'
+            },
+            {
+                name: 'Listar Registros',
+                value: 'listar'
+            },
+            {
+                name: 'Buscar por ID',
+                value: 'buscaID'
+            },
+            {
+                name: 'Atualizar Registro',
+                value: 'atualizar'
+            },
+            {
+                name: 'Excluir Registro',
+                value: 'excluir'
+            },
+            {
+                name: 'Listar em Maiúscula',
+                value: 'maiuscula'
+            },
+            {
+                name: 'Sobrenome Primeiro',
+                value: 'sobrenome'
+            },
+            {
+                name: 'Pesquisa por Nome',
+                value: 'searchName'
+            },
+            {
+                name: 'Sair',
+                value: 'sair'
+            }
+        ]
+    });
+    switch(opcao){
+        case "listar":
+            await ler();
+        break;
+        case "cadastrar":
+            await criar();
+        break;
+        case "buscaID":
+            await buscaPorID();
+        break;
+        case "atualizar":
+            await atualizaRegistro();
+        break;
+        case "excluir":
+            await excluirRegistro();
+        break;
+        case "maiuscula":
+            await maiuscula();
+        break;
+        case "sobrenome":
+            await sobrenome();
+        break;
+        case "searchName":
+            await pesquisaNome();
+        break;
+        case "sair":
+            break;
+    }
+}
