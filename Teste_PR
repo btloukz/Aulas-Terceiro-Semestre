@@ -80,7 +80,7 @@ async function adicionar_pedido(){
         if(produto =="" || valor == ""){
             console.error("Você deixou espaços em branco! Encerrando...")
         } else {
-            let novo = {id_pedido, produto, valor}
+            let novo = {pedido_id: id_pedido, produto, valor}
             let criar = await api.cadastrarPedidoProduto(novo)
             console.log(`Cadastro realizado com sucesso! Nova ID: ${criar.id}`)
         }
@@ -96,7 +96,7 @@ async function listarPedidos(){
 
 async function listarProdutos(){
     let listar = await api.listarPedidoProdutos()
-    listar.filter((elemento)=>{
+    listar.forEach((elemento)=>{
         console.log(`${elemento.pedido_id} - ${elemento.id} - ${elemento.produto} - R$${elemento.valor}`)
         })     
 }
@@ -134,7 +134,7 @@ async function listarPedidosTotal(){
             item1 += item2.valor
             return item1
         }, 0)
-        console.log(`${item.id} - ${item.cliente} - R$${soma}`)
+        console.log(`${item.id} - ${item.cliente} - R$${soma.toFixed(2)}`)
     })
 }    
 
