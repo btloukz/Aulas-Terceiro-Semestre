@@ -31,6 +31,30 @@ async function menu() {
             value: 'listarPedidosTotal'
         },
         {
+            name: 'Verificar quantidade de produtos',
+            value: 'qtdProdutos'
+        },
+        {
+            name: 'Buscar pedido por nome',
+            value: 'buscarPedidoNome'
+        },
+        {
+            name: 'Relatório Geral',
+            value: 'relatorio'
+        },
+        {
+            name: 'Buscar Valor Mínimo',
+            value: 'valorMinimo'
+        },
+        {
+            name: 'Quantidade maior',
+            value: 'qtdMaior'
+        },
+        {
+            name: 'Somar Produtos Cliente',
+            value: 'somarCliente'
+        },
+        {
             name: 'Sair',
             value: 'sair'
         }
@@ -56,6 +80,24 @@ async function menu() {
             break;
         case 'listarPedidosTotal':
             await listarPedidosTotal()
+            break;
+        case 'qtdProdutos':
+            await qtdProdutos()
+            break;
+        case 'buscarPedidoNome':
+            await buscarPedidoNome()
+            break;
+        case 'relatorio':
+            await relatorio()
+            break;
+        case 'valorMinimo':
+            await valorMinimo()
+            break;
+        case 'qtdMaior':
+            await qtdMaior()
+            break;
+        case 'somarCliente':
+            await somarCliente()
             break;
         case 'sair': 
             return;
@@ -119,12 +161,10 @@ async function buscarProdutoPorPedido(){
             })}
         })
     }
-    
 }
 
 async function listarPedidosTotal(){
     let pedido = await api.listarPedidos()
-    // let produto_id = await api.lerPedidoProdutoPorId()
     let listar = await api.listarPedidoProdutos()
     pedido.forEach((item)=>{
         let filtro = listar.filter((elemento)=>{
@@ -137,5 +177,86 @@ async function listarPedidosTotal(){
         console.log(`${item.id} - ${item.cliente} - R$${soma.toFixed(2)}`)
     })
 }    
+
+async function qtdProdutos(){
+    let valor = await number({message: "Informe o ID para verificação: "})
+    let pedido = await api.lerPedidoPorId(valor)
+    if(pedido){
+        let cliente = await api.listarPedidoProdutos()
+        let valida = cliente.filter((item)=>item.pedido_id === valor)
+        if(valida.length === 0){
+            console.log(`O pedido ${valor} não possui produtos.`)
+        } else {
+            console.log(`O pedido ${valor} tem ${valida.length} produtos.`)
+        }
+    }
+}
+
+async function buscarPedidoNome(){
+    let nome = await input ({message: "Informe o nome do produto: "})
+    let verifica = await api.listarPedidoProdutos()
+    let valida = verifica.filter((item)=>{
+        if(item.produto.toLowerCase() === nome.toLowerCase()){
+            console.log(`ID: ${item.pedido_id} - ID do Produto: ${item.id} - Produto: ${item.produto}`)
+            return true
+        } 
+    })
+    if(valida.length === 0){
+        console.log(`O Produto ${nome} não consta.`)
+    }
+}
+
+async function relatorio(){
+     let pedidos = await api.listarPedidos()
+     let produtos = await api.listarPedidoProdutos()
+     pedidos.forEach((pedido)=>{
+        let valida = produtos.filter(item=>item.pedido_id === pedido.id)
+        console.log(`${pedido.id} - ${pedido.cliente} - ${valida.length} produtos.`)
+     })
+}
+
+async function valorMinimo(){
+    let preco = await number({message: "Informe o valor em R$: "})
+    let produto = await api.listarPedidoProdutos()
+    let filtra = produto.filter((item)=>{
+        if(item.valor >= preco){
+            console.log(`ID do pedido: ${item.pedido_id} - Produto: ${item.produto} - Valor: R$${item.valor}`)
+            return true
+        }
+    })
+    if(filtra.length === 0){
+        console.log("Nenhum produto com valor maior.")
+    }
+}
+
+async function qtdMaior(){
+    let qtd = await number({message: "Diga um determinado número de produtos: "})
+    let pedidos = await api.listarPedidos()
+    let produtos = await api.listarPedidoProdutos()
+    let encontrados = []
+    pedidos.forEach((pedido)=>{
+        let itens = produtos.filter((item)=>item.pedido_id === pedido.id)
+        if(itens.length > qtd){
+            console.log(`Pedido ${pedido.id} - Cliente: ${pedido.cliente} - ${itens.length} produtos`)
+            encontrados.push(pedido)
+        }
+    })
+    if(encontrados.length === 0){
+        console.log("Nenhum pedido a mais")
+    }
+}
+
+async function somarCliente() {
+    let nome = await input({message: "Informe o nome do cliente: "})
+    let pedidos = await api.listarPedidos()
+    let produtos = await api.listarPedidoProdutos()
+    pedidos.forEach((item)=>{
+        if(item.cliente.toLowerCase().includes(nome.toLowerCase())){
+            let filtra = produtos.filter(prod=>prod.pedido_id === item.id)
+            let soma = filtra.reduce((a,b)=>a+b.valor, 0)
+            console.log(`Cliente ${item.cliente} - Total - R$${soma.toFixed(2).replace(".", ",")}`)
+        }
+    })
+}
 
 await menu()
