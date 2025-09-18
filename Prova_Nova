@@ -1,0 +1,230 @@
+import {input, number, select} from '@inquirer/prompts'
+import api from './CrudAPI.js'
+
+async function novaConsulta(){
+    let nome = await input({message: "Diga o nome do novo paciente: "})
+    while(nome==""){
+        nome = await input({message: "Diga o nome do novo paciente: "})
+    }
+    let idade = await input({message: "Informe sua idade: "})
+    while(idade==""){
+        idade = await input({message: "Informe sua idade: "})
+    }
+    let especialidadePaciente = await select({
+        message: "Escolha sua especialidade: ",
+        choices: [
+            {
+                name: "Clinica Medica",
+                value: 100,
+            },
+            {
+                name: "Pediatria",
+                value: 101
+            },
+            {
+                name: "Traumatologia",
+                value: 102
+            },
+            {
+                name: "Cardiologia",
+                value: 103
+            },
+            {
+                name: "Dermatologia",
+                value: 104
+            },
+            {
+                name: "Geriatria",
+                value: 105
+            }
+        ]
+    })
+    let criar;
+    let final = {paciente: nome, idade: idade, id_especialidade: especialidadePaciente}
+    switch(especialidadePaciente){
+        case 100:
+            criar = await api.criar(final)
+            console.log(`Cadastro realizado com sucesso! Nova ID: ${criar.id}`)
+        break;
+        case 101:
+            criar = await api.criar(final)
+            console.log(`Cadastro realizado com sucesso! Nova ID: ${criar.id}`)
+        break;
+        case 102:
+            criar = await api.criar(final)
+            console.log(`Cadastro realizado com sucesso! Nova ID: ${criar.id}`)
+        break;
+        case 103:
+            criar = await api.criar(final)
+            console.log(`Cadastro realizado com sucesso! Nova ID: ${criar.id}`)
+        break;
+        case 104:
+            criar = await api.criar(final)
+            console.log(`Cadastro realizado com sucesso! Nova ID: ${criar.id}`)
+        break;
+        case 105:
+            criar = await api.criar(final)
+            console.log(`Cadastro realizado com sucesso! Nova ID: ${criar.id}`)
+        break;
+    }
+}
+
+async function listarConsulta(){
+    let listar = await api.lerTodos()
+    listar.forEach((elemento)=>{
+        console.log(`${elemento.id} - ${elemento.paciente} - Idade: ${elemento.idade} - ${elemento.id_especialidade}`)
+    })
+}
+
+async function buscarID(){
+    let dado = await number({message: 'Diga o ID desejado: '})
+    let ler = await api.lerPorId(dado)
+    let especialidades = await api.listaEspecialidades()
+    if(!ler){
+        console.log("Consulta não encontrada")
+    } else {
+        let todos = await api.lerTodos()
+        todos.filter((elemento)=>{
+            if(elemento.id === dado){
+                console.log(`${elemento.id}`)
+                console.log(`${elemento.paciente}`) 
+                console.log(`Idade: ${elemento.idade}`)
+                especialidades.filter((item)=>{
+                    if(item.id === elemento.id_especialidade)
+                        console.log(item.nome)
+                }) 
+            }})
+
+    }
+}
+
+async function buscarNome(){
+    let dado = await input({message: 'Informe o nome do paciente: '})
+    let ler = await api.lerTodos()
+    let valida = ler.filter((elemento)=>{
+        if(elemento.paciente.startsWith(dado)){
+            console.log(`${elemento.id} - ${elemento.paciente} - Idade: ${elemento.idade} - ${elemento.id_especialidade}`)
+            return true
+        } 
+    })
+    if(valida.length === 0){
+        console.log("Registro inexistente")
+    }
+}
+
+async function buscarEspecialidade(){
+    let elemento = await number({message: "Informe o ID da Especialidade: "})
+    let todos = await api.lerTodos()
+    // let especialidade = await api.listaEspecialidades()
+    todos.filter((valor)=>{
+        if(elemento === valor.id_especialidade){
+            console.log(`${valor.id} - ${valor.paciente} - Idade: ${valor.idade} - ${valor.id_especialidade}`)
+        }
+    })
+}
+
+async function listarEspecialidade(){
+    let listar = await api.lerTodos()
+    let especialidade = await api.listaEspecialidades()
+    listar.filter((elemento)=>{
+        especialidade.filter((item)=>{
+            if(item.id === elemento.id_especialidade){
+                console.log(`${elemento.id} - ${elemento.paciente} - Idade: ${elemento.idade} - ${item.nome}`)
+            }
+        })
+    })
+}
+
+async function menorIdade(){
+    let ler = await api.lerTodos()
+    ler.filter((elemento)=>{
+        if(elemento.idade < 18){
+        console.log(`${elemento.paciente}(${elemento.idade})`)
+    }
+    })
+}
+
+async function problemas(){
+    let ler = await api.lerTodos()
+    ler.filter((elemento)=>{
+        if(elemento.idade > 18 && elemento.id_especialidade === 101){
+            console.log(`${elemento.id} - ${elemento.paciente} - Idade: ${elemento.idade} - ${elemento.id_especialidade}`)
+        }
+        if(elemento.idade < 60 && elemento.id_especialidade === 105){
+            console.log(`${elemento.id} - ${elemento.paciente} - Idade: ${elemento.idade} - ${elemento.id_especialidade}`)
+        }  
+    })
+}
+
+let opcao;
+while(opcao!="sair"){
+        opcao = await select({
+        message: 'Opção',
+        choices: [
+            {
+                name: 'Criar nova consulta',
+                value: 'novaConsulta'
+            },
+            {
+                name: 'Listar todas as consultas',
+                value: 'listarConsulta'
+            },
+            {
+                name: 'Buscar consulta por ID',
+                value: 'buscarID'
+            },
+            {
+                name: 'Buscar consulta por Nome',
+                value: 'buscarNome'
+            },
+            {
+                name: 'Buscar consulta por Especialidade',
+                value: 'buscarEspecialidade'
+            },
+            {
+                name: 'Listar Consultas com Nome Especialidade',
+                value: 'listarEspecialidade'
+            },
+            {
+                name: 'Menores de Idade',
+                value: 'menorIdade'
+            },
+            {
+                name: 'Listar Problemas',
+                value: 'problemas'
+            },
+            {
+                name: 'Sair',
+                value: 'sair'
+            }
+        ]
+    });
+    switch(opcao){
+        case "novaConsulta":
+            await novaConsulta()
+        break;
+        case "listarConsulta":
+            await listarConsulta()
+        break;
+        case "buscarID":
+            await buscarID()
+        break;
+        case "buscarNome":
+            await buscarNome()
+        break;
+        case "menorIdade":
+            await menorIdade()
+        break;
+        case "problemas":
+            await problemas()
+        break;
+        case "buscarEspecialidade":
+            await buscarEspecialidade()
+        break;
+        case "listarEspecialidade":
+            await listarEspecialidade()
+        break;
+        case "sair":
+            break;
+    }
+}
